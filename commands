@@ -1,0 +1,37 @@
+# helm install my-istio-base-release -n istio-system --create-namespace istio/base --set global.istioNamespace=istio-system
+# helm install my-istiod-release -n istio-system --create-namespace istio/istiod --set telemetry.enabled=true --set global.istioNamespace=istio-system --set meshConfig.ingressService=istio-gateway --set meshConfig.ingressSelector=gateway
+# kubectl apply -f 3-examples
+# kubectl exec -it client -n backend -- sh #optional
+# while true; do curl http://first-app.staging:8080/api/devices && echo "" && sleep 1; done #opttional
+# while true; do curl http://localhost:8080/api/devices && echo "" && sleep 1; done #opttional
+# helm install gateway -n istio-ingress --create-namespace istio/gateway
+# kubectl get po -n istio-ingress --show-labels
+# kubectl get svc -n istio-ingress 
+# Create CNAME for the required domain/host.
+# curl --header "Host: app.devopsbyexample.com"  "http://localhost/api/devices"
+# dig +short app.devopsbyexample.com
+# https://cert-manager.io/docs/installation/helm/
+# helm repo add jetstack https://charts.jetstack.io
+# kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.crds.yaml
+# helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.12.0 
+# --set installCRDs=true
+# helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.12.0  --set installCRDs=true --set prometheus.enabled=false   # Example: disabling prometheus using a Helm parameter --set webhook.timeoutSeconds=4   # Example: changing the webhook timeout using a Helm parameter
+# kubectl get certificates -n istio-ingress
+# kubectl get certificaterequest -A
+# kubectl describe certificaterequest  api-devopsbyexample-com-hlljb -n istio-ingress
+# kubectl describe order -n istio-ingress
+# kubectl describe challenge -n istio-ingress
+# kubectl get secret -n istio-ingress
+# kubectl get secret api-devopsbyexample-com-q9zf4 -n istio-ingress -oyaml
+# openssl s_client -connect app.devopsbyexample.com:443 #check encoded certificate
+# https is ok for created domain
+# kubectl get po second-app-v2-548f9694d6-gbhsh -n production -oyaml # get container port and pod label for monitoring
+# kubectl create ns monitoring #with monitoring: prometheus label
+# helm install production prometheus-community/kube-prometheus-stack --set prometheus-node-exporter.hostRootFsMount.enabled=false --values prometheus-values.yaml -n monitoring
+# kubectl port-forward svc/prometheus-operated 9090 -n monitoring #prometheus-ui
+# kubectl port-forward svc/production-grafana 3000:80 -n monitoring #grafana-ui
+# kubectl get secret production-grafana -n monitoring -oyaml #grafana-ui-cred
+# helm install --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator #OPERATOR
+# helm install --namespace istio-system kiali-server kiali/kiali-server #WITHOUT-OPERATOR
+# kubectl port-forward svc/kiali 20001 -n istio-system #kiali-ui
+# kubectl -n istio-system create token kiali-service-account #kiali-login-token

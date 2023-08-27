@@ -1,0 +1,25 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: api
+  namespace: dev
+spec:
+  selector:
+    istio: gateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - dev.devopsbyexample.com
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - dev.devopsbyexample.com
+      tls:
+        credentialName: api-devopsbyexample-com-crt
+        mode: SIMPLE

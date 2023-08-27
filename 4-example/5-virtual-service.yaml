@@ -1,0 +1,25 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: third-app
+  namespace: dev
+spec:
+  hosts:
+    - dev.devopsbyexample.com
+    - third-app
+  gateways:
+    - api
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: third-app
+            subset: v1
+          weight: 5
+        - destination:
+            host: third-app
+            subset: v2
+          weight: 95

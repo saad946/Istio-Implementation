@@ -1,0 +1,148 @@
+
+
+## Configuration for prometheus-node-exporter subchart
+prometheusOperator:
+  enabled: true
+
+  ## Prometheus-Operator v0.39.0 and later support TLS natively.
+  ##
+  tls:
+    enabled: true
+    # Value must match version names from https://golang.org/pkg/crypto/tls/#pkg-constants
+    tlsMinVersion: VersionTLS13
+    # The default webhook port is 10250 in order to work out-of-the-box in GKE private clusters and avoid adding firewall rules.
+    internalPort: 10250
+
+  affinity: {}
+    # nodeAffinity:
+    #   requiredDuringSchedulingIgnoredDuringExecution:
+    #     nodeSelectorTerms:
+    #     - matchExpressions:
+    #       - key: kubernetes.io/e2e-az-name
+    #         operator: In
+    #         values:
+    #         - e2e-az1
+    #         - e2e-az2
+  
+  ## Prometheus-operator image
+  ##
+  image:
+    registry: quay.io
+    repository: prometheus-operator/prometheus-operator
+    # if not set appVersion field from Chart.yaml is used
+    tag: "v0.63.0"
+    sha: ""
+    pullPolicy: IfNotPresent
+
+  ## Thanos side-car image when configured
+  ##
+  thanosImage:
+    registry: quay.io
+    repository: thanos/thanos
+    tag: v0.31.0
+    sha: ""
+
+ 
+  ##
+  secretFieldSelector: "type!=kubernetes.io/dockercfg,type!=kubernetes.io/service-account-token,type!=helm.sh/release.v1"
+
+## Deploy a Prometheus instance
+##
+
+prometheus-node-exporter:
+  namespaceOverride: ""
+  podLabels:
+    ## Add the 'node-exporter' label to be used by serviceMonitor to match standard common usage in rules and grafana dashboards
+    ##
+    jobLabel: node-exporter
+  releaseLabel: true
+  extraArgs:
+    - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
+    - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$
+  service:
+    portName: http-metrics
+
+  serviceAccount:
+    create: true
+    name: "prometheus"  
+prometheus:
+  prometheusSpec:
+    replicas: 1      # work in High-Availability mode
+    retention: 12h 
+    image:
+      tag: v2.45.0   # use a specific version of Prometheus
+
+    ruleSelector:
+      matchLabels:
+        prometheus: main
+    ruleNamespaceSelector:
+      matchLabels:
+        monitoring: prometheus
+    serviceMonitorSelector: 
+      matchLabels:
+        prometheus: main
+ 
+    serviceMonitorNamespaceSelector: 
+      matchLabels:
+        monitoring: prometheus
+
+    podMonitorSelector: 
+      matchLabels:
+        prometheus: main
+
+    podMonitorNamespaceSelector: 
+      matchLabels:
+        monitoring: prometheus
+
+    probeSelector:
+      matchLabels:
+        prometheus: main
+
+    probeNamespaceSelector:
+      matchLabels:
+        monitoring: prometheus
+  
+
+grafana:
+  enabled: true
+  
+  ##
+  defaultDashboardsEnabled: true
+
+  
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      # Allow discovery in all namespaces for dashboards
+      searchNamespace: ALL
+
+      ## Annotations for Grafana dashboard configmaps
+      ##
+      annotations: {}
+      multicluster:
+        global:
+          enabled: true
+        etcd:
+          enabled: false
+      provider:
+        allowUiUpdates: false
+    datasources:
+      enabled: true
+      defaultDatasourceEnabled: true
+      isDefaultDatasource: true
+
+      uid: prometheus
+
+     
+      ## Set method for HTTP to send query to datasource
+      httpMethod: POST
+
+
+      alertmanager:
+        enabled: true
+        uid: alertmanager
+        handleGrafanaManagedAlerts: false
+        implementation: prometheus
+

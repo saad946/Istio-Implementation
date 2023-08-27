@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: third-app-v2
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: third-app
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: third-app
+        version: v2
+        istio: monitor
+    spec:
+      containers:
+        - image: aputra/myapp-lesson155:latest
+          imagePullPolicy: Always
+          name: third-app
+          env:
+            - name: SERVICE
+              value: third-app
+            - name: VERSION
+              value: v2
+          ports:
+            - name: http
+              containerPort: 8080
